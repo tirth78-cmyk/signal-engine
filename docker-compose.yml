@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  signal-engine:
+    build: .
+    container_name: improzo-signal-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - SIGNAL_ENVIRONMENT=production
+      - SIGNAL_LOG_LEVEL=INFO
+      - SIGNAL_DEBUG=false
+      - SIGNAL_DATABASE__URL=sqlite+aiosqlite:///./data/signal_engine.db
+      - SIGNAL_REDIS__URL=redis://redis:6379/0
+      - SIGNAL_HUBSPOT__API_KEY=${HUBSPOT_API_KEY:-}
+      - SIGNAL_HUBSPOT__PORTAL_ID=${HUBSPOT_PORTAL_ID:-}
+      - SIGNAL_API__CORS_ORIGINS=["http://localhost:5173","https://tirthankarray.github.io"]
+    volumes:
+      - signal-data:/app/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - signal-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: improzo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - signal-net
+
+volumes:
+  signal-data:
+  redis-data:
+
+networks:
+  signal-net:
+    driver: bridge
